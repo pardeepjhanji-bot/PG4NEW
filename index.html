@@ -1,0 +1,181 @@
+<!-- File: INDEX35.html (Dynamic Bardana columns in REPORT, per bardana used till date) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Purchase Entry & Report</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  
+
+  <!-- PDF libs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+
+
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- =========================
+       PART A: PURCHASE ENTRY
+       ========================= -->
+  <div class="card">
+    <div class="row" id="seasonRow" style="margin-bottom:16px; display:none;" data-hint="Season Info (hover to edit)">
+      <div>
+        <label for="seasonType">Season</label>
+        <select id="seasonType">
+          <option value="Wheat Season">Wheat Season</option>
+          <option value="Paddy Season">Paddy Season</option>
+        </select>
+      </div>
+      <div>
+        <label for="seasonYear">Year</label>
+        <select id="seasonYear"></select>
+      </div>
+      <div>
+        <label for="seasonRate">Rate</label>
+        <input type="number" id="seasonRate" placeholder="Enter rate" />
+      </div>
+    </div>
+
+<div class="row" id="bardanaSetup" style="align-items:flex-end; margin-top:4px;" data-hint="Bardana (hover to edit)">
+      <div>
+        <label for="bd1">Bardana Type 1</label>
+        <input id="bd1" type="text" placeholder="e.g., JUTE NEW" />
+      </div>
+      <div>
+        <label for="bd2">Bardana Type 2</label>
+        <input id="bd2" type="text" placeholder="e.g., JUTE PREVIOUS YEAR" />
+      </div>
+      <div>
+        <label for="bd3">Bardana Type 3 (optional)</label>
+        <input id="bd3" type="text" placeholder="Optional" />
+      </div>
+      <div style="flex:1"></div>
+      <div style="display:flex; gap:10px;">
+        <button class="btn btn-add" id="applyBardanaBtn" type="button">Apply Bardana</button>
+        <button class="btn btn-warn" id="changeBardanaBtn" type="button" style="display:none;">Change Bardana</button>
+      </div>
+      <div style="flex-basis:100%"><div id="bardanaChips"></div></div>
+      <div style="flex-basis:100%" class="hint">Max 3 types. Columns stay frozen until you click <strong>Change Bardana</strong>.</div>
+    </div>
+
+
+<h2 id="reportTitle">PG-4 REPORT <span id="seasonName"></span> <span id="seasonYear"></span></h2>
+
+
+    <!-- Season Info (unchanged) -->
+    
+
+    <!-- Top: Date + Mandi (unchanged) -->
+    <div class="row">
+      <div>
+        <label for="purchaseDate">Date of Purchase</label>
+        <input type="date" id="purchaseDate" required />
+      </div>
+      <div>
+        <label for="mandiName">Mandi Name</label>
+        <input type="text" id="mandiName" list="mandiList" placeholder="Type or select mandi" required />
+        <datalist id="mandiList"></datalist>
+        <div class="hint">Type a new mandi or pick an existing one.</div>
+      </div>
+    </div>
+
+    <!-- NEW: Bardana Setup (minimal) -->
+    
+
+    <!-- Entries (header/body will be rebuilt dynamically but defaults match original) -->
+    <table id="entryTable">
+      <thead>
+        <tr id="entryHeadRow">
+          <th>S.No.</th>
+          <th>Firm Name</th>
+          <th>Jute New (Bags)</th>
+          <th>Jute Previous Year (Bags)</th>
+          <th>Total Bags</th>
+          <th>Total Weight</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="entryBody"></tbody>
+      <tfoot>
+        <tr>
+          <td id="subtotalLabel" colspan="4">Subtotal</td>
+          <td id="subtotalBags">0</td>
+          <td id="subtotalWeight">0</td>
+          <td></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <div class="row" style="margin-top:12px;">
+      <div><button class="btn btn-add" type="button" onclick="addRow()">+ Add Row</button></div>
+      <div style="flex:1;"></div>
+      <div style="text-align:right;"><button class="btn btn-submit" type="button" onclick="submitData()">Submit</button></div>
+    </div>
+
+    <div id="status"></div>
+  </div>
+
+  <!-- =========================
+       PART B: REPORT (Dynamic Bardana columns)
+       ========================= -->
+  <div class="card">
+    <h2>Generate Report</h2>
+    <div class="row" style="align-items:center;">
+      <div>
+        <label for="reportMandi">Mandi for Report</label>
+        <select id="reportMandi"></select>
+      </div>
+      <div>
+        <label for="reportDate">Date</label>
+        <select id="reportDate"></select>
+      </div>
+      <div style="flex: 0 0 auto;">
+        <label style="display:flex; align-items:center; gap:8px;">
+          <input id="useRange" type="checkbox" />
+          Use Date Range
+        </label>
+      </div>
+      <div id="rangeWrap" style="display:none; flex: 0 0 220px;">
+        <label for="fromDate">From</label>
+        <input type="date" id="fromDate" />
+      </div>
+      <div id="rangeWrap2" style="display:none; flex: 0 0 220px;">
+        <label for="toDate">To</label>
+        <input type="date" id="toDate" />
+      </div>
+      <div style="margin-left:auto;">
+        <button class="btn btn-secondary" onclick="generateReport()">Generate Report</button>
+        <button class="btn" style="background:#17a2b8; color:#fff;" onclick="ping()">Ping</button>
+        <button class="btn" style="background:#28a745; color:#fff;" onclick="downloadPDF()">Download PDF</button>
+      </div>
+    </div>
+
+    <div id="signControls" class="row" style="margin-top:12px; align-items:center;">
+      <div style="flex: 1 1 320px;">
+        <label for="signInput">Upload Digital Sign (PNG recommended)</label>
+        <input id="signInput" type="file" accept="image/*" />
+        <div class="sign-preview" id="signPreview" style="display:none;">
+          <span>Preview:</span>
+          <img id="signPreviewImg" alt="Signature Preview" />
+          <button class="btn" style="background:#dc3545;color:#fff;" type="button" onclick="clearSignature()">Clear</button>
+        </div>
+        <div class="hint">Your sign is stored in this browser only (localStorage).</div>
+      </div>
+    </div>
+
+    <div id="reportStatus"></div>
+    <div id="reportOutput" style="margin-top:12px;"></div>
+  </div>
+
+  
+
+
+
+
+  <script src="app.js"></script>
+</body>
+</html>
